@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>ТАНКИ В ЗАКУЛИСЬЕ</title>
+<style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body { margin: 0; overflow: hidden; font-family: 'Arial', sans-serif; background: #111; color: #fff; touch-action: none; user-select: none; }
+    #menu {
+        position: absolute; inset: 0; background: rgba(0,0,0,0.94);
+        display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+        z-index: 100; padding: 12px; overflow-y: auto; text-align: center;
+    }
+    h1 { color: #ffaa00; text-shadow: 0 0 12px #ffaa00; margin: 6px 0 10px; font-size: 1.6em; }
+    .section { margin: 5px 0; width: 100%; max-width: 460px; background: #1c1c1c; padding: 8px; border-radius: 10px; border: 1px solid #333; }
+    .section-title { color: #ffaa00; margin-bottom: 6px; font-weight: bold; font-size: 0.9em; }
+    .options { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+    button {
+        background: #333; color: #fff; border: 2px solid #555; padding: 8px 12px;
+        border-radius: 6px; font-size: 13px; cursor: pointer; transition: 0.15s;
+        touch-action: manipulation; font-family: inherit;
+    }
+    button.selected { background: #ffaa00; color: #000; border-color: #fff; font-weight: bold; }
+    #start-btn {
+        background: #ffaa00; color: #000; font-size: 20px; padding: 12px 44px;
+        margin: 12px 0 8px; border: none; border-radius: 50px; font-weight: bold;
+        box-shadow: 0 0 20px rgba(255,170,0,0.6); animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+    #profile {
+        width: 100%; max-width: 460px; background: #221a08; padding: 10px;
+        border-radius: 10px; border: 2px solid #ffaa00; margin-bottom: 6px;
+    }
+    #rank-name { color: #ffaa00; font-size: 1.3em; font-weight: bold; text-shadow: 0 0 8px #ffaa00; }
+    #rank-stats { font-size: 0.8em; color: #ccc; margin-top: 4px; }
+    #progress-bar {
+        width: 100%; height: 10px; background: #333; border-radius: 5px;
+        margin-top: 6px; overflow: hidden;
+    }
+    #progress-fill {
+        height: 100%; background: linear-gradient(90deg, #ffaa00, #ffdd66);
+        width: 0%; transition: width 0.3s;
+    }
+    #progress-text { font-size: 0.75em; color: #aaa; margin-top: 3px; }
+    #hud {
+        position: absolute; top: 8px; left: 8px; right: 8px; display: flex;
+        justify-content: space-between; gap: 4px; pointer-events: none; z-index: 10;
+        font-size: 12px; text-shadow: 1px 1px 2px #000;
+    }
+    .hud-box { background: rgba(0,0,0,0.65); padding: 4px 7px; border-radius: 5px; border: 1px solid #ffaa00; white-space: nowrap; }
+    #timer { color: #ffaa00; font-weight: bold; }
+    #enemies { color: #ff5555; font-weight: bold; }
+    #hp { color: #55ff55; font-weight: bold; }
+    #exit-dist { color: #00ff88; font-weight: bold; }
+    #minimap {
+        position: absolute; top: 8px; right: 8px; width: 110px; height: 110px;
+        background: rgba(0,0,0,0.7); border: 2px solid #ffaa00; border-radius: 6px;
+        z-index: 10;
+    }
+    #joystick-area {
+        position: absolute; bottom: 20px; left: 20px; width: 130px; height: 130px;
+        background: rgba(255,255,255,0.08); border-radius: 50%;
+        border: 2px solid rgba(255,170,0,0.4); z-index: 20;
+        touch-action: none; display: flex; align-items: center; justify-content: center;
+    }
+    #joystick-knob {
+        position: absolute; width: 50px; height: 50px;
+        background: rgba(255,170,0,0.85); border-radius: 50%;
+        border: 2px solid #fff; pointer-events: none;
+        left: 50%; top: 50%; margin-left: -25px; margin-top: -25px;
+    }
+    #shoot-btn {
+        position: absolute; bottom: 30px; right: 30px; width: 90px; height: 90px;
+        background: rgba(255,60,60,0.8); border-radius: 50%; border: 3px solid #fff;
+        z-index: 20; display: flex; align-items: center; justify-content: center;
+        font-weight: bold; font-size: 14px; color: #fff; text-shadow: 1px 1px 2px #000;
+        touch-action: none; user-select: none;
+    }
+    #shoot-btn:active { background: rgba(255,120,120,0.95); transform: scale(0.95); }
+    #game-over {
+        position: absolute; inset: 0; background: rgba(0,0,0,0.9);
+        display: none; flex-direction: column; align-items: center; justify-content: center;
+        z-index: 200; color: #fff; padding: 20px; text-align: center;
+    }
+    #game-over h2 { font-size: 2.2em; margin: 0 0 8px; }
+    #game-over p { font-size: 1.05em; margin: 4px 0; }
+    #reward-line { color: #ffaa00; font-weight: bold; font-size: 1.2em; margin: 10px 0; }
+    #restart-btn { margin-top: 16px; padding: 12px 32px; font-size: 17px; background: #ffaa00; color: #000; border: none; border-radius: 50px; font-weight: bold; }
+    .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div id="menu">
+    <h1>ТАНКИ В ЗАКУЛИСЬЕ</h1>
+
+    <div id="profile">
+        <div id="rank-name">Новобранец</div>
+        <div id="rank-stats">Очки: 0 · Побед: 0 · Рекорд: —</div>
+        <div id="progress-bar"><div id="progress-fill"></div></div>
+        <div id="progress-text">0 / 100 до следующего звания</div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Тип танка</div>
+        <div class="options" id="tank-type">
+            <button data-type="sniper">Снайпер</button>
+            <button data-type="light" class="selected">Лёгкий</button>
+            <button data-type="heavy">Тяжёлый</button>
+        </div>
+    </div>
+    <div class="section">
+        <div class="section-title">Цвет</div>
+        <div class="options" id="tank-color">
+            <button data-color="0x00ff00" class="selected" style="background:#00ff00; color:#000;">Зелёный</button>
+            <button data-color="0xff0000" style="background:#ff0000;">Красный</button>
+            <button data-color="0x2266ff" style="background:#2266ff;">Синий</button>
+            <button data-color="0xffff00" style="background:#ffff00; color:#000;">Жёлтый</button>
+            <button data-color="0xffffff" style="background:#fff; color:#000;">Белый</button>
+            <button data-color="0xff00ff" style="background:#ff00ff;">Розовый</button>
+        </div>
+    </div>
+    <div class="section">
+        <div class="section-title">Улучшения</div>
+        <div class="options" id="tank-upgrade">
+            <button data-upgrade="speed">Скорость</button>
+            <button data-upgrade="damage" class="selected">Урон</button>
+            <button data-upgrade="armor">Броня</button>
+        </div>
+    </div>
+    <div class="section">
+        <div class="section-title">Управление</div>
+        <div class="options" id="control-mode">
+            <button data-mode="tank" class="selected">Танковое</button>
+            <button data-mode="arcade">Аркадное</button>
+        </div>
+    </div>
+    <button id="start-btn">НАЧАТЬ БОЙ!</button>
+</div>
+
+<div id="hud" class="hidden">
+    <div class="hud-box">⏱ <span id="timer">05:00</span></div>
+    <div class="hud-box">💀 <span id="enemies">15</span></div>
+    <div class="hud-box">❤ <span id="hp">100</span></div>
+    <div class="hud-box">🚪 <span id="exit-dist">—</span></div>
+</div>
+<canvas id="minimap" class="hidden" width="110" height="110"></canvas>
+
+<div id="joystick-area" class="hidden">
+    <div id="joystick-knob"></div>
+</div>
+<div id="shoot-btn" class="hidden">ОГОНЬ</div>
+
+<div id="game-over">
+    <h2 id="result-title">ПОБЕДА!</h2>
+    <p id="result-text"></p>
+    <div id="reward-line"></div>
+    <p id="new-rank" style="color:#00ff88; font-weight:bold;"></p>
+    <button id="restart-btn">В МЕНЮ</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function () {
+    'use strict';
+
+    // ============================================================
+    //  КОНСТАНТЫ ЛАБИРИНТА
+    // ============================================================
+    const MAZE_CELLS = 15;
+    const GRID = MAZE_CELLS * 2 + 1;
+    const CELL = 6;
+    const WALL_H = 5;
+    const HALF = (GRID * CELL) / 2;
+
+    // ============================================================
+    //  СИСТЕМА ЗВАНИЙ
+    // ============================================================
+    const RANKS = [
+        { name: 'Новобранец', need: 0 },
+        { name: 'Рядовой',    need: 100 },
+        { name: 'Сержант',    need: 300 },
+        { name: 'Старшина',   need: 600 },
+        { name: 'Лейтенант',  need: 1000 },
+        { name: 'Капитан',    need: 1500 },
+        { name: 'Майор',      need: 2200 },
+        { name: 'Полковник',  need: 3000 },
+        { name: 'Генерал',    need: 4000 },
+        { name: 'Маршал',     need: 5500 }
+    ];
+
+    const SAVE_KEY = 'tanki_zakulisye_save_v1';
+
+    function loadSave() {
+        try {
+            const raw = localStorage.getItem(SAVE_KEY);
+            if (!raw) return { points: 0, wins: 0, bestTime: null, totalKills: 0 };
+            const d = JSON.parse(raw);
+            return {
+                points: d.points || 0,
+                wins: d.wins || 0,
+                bestTime: d.bestTime || null,
+                totalKills: d.totalKills || 0
+            };
+        } catch (e) {
+            return { points: 0, wins: 0, bestTime: null, totalKills: 0 };
+        }
+    }
+
+    function writeSave(save) {
+        try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {}
+    }
+
+    function getRankIndex(points) {
+        let idx = 0;
+        for (let i = 0; i < RANKS.length; i++) {
+            if (points >= RANKS[i].need) idx = i;
+        }
+        return idx;
+    }
+
+    let save = loadSave();
+    let sessionKills = 0;
+
+    function refreshProfileUI() {
+        const idx = getRankIndex(save.points);
+        const rank = RANKS[idx];
+        const next = RANKS[idx + 1];
+
+        document.getElementById('rank-name').textContent = rank.name;
+
+        let bestStr = '—';
+        if (save.bestTime != null) {
+            const m = Math.floor(save.bestTime / 60);
+            const s = Math.floor(save.bestTime % 60);
+            bestStr = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        }
+        document.getElementById('rank-stats').textContent =
+            `Очки: ${save.points} · Побед: ${save.wins} · Убийств: ${save.totalKills} · Рекорд: ${bestStr}`;
+
+        const fill = document.getElementById('progress-fill');
+        const text = document.getElementById('progress-text');
+        if (next) {
+            const prevNeed = rank.need;
+            const cur = save.points - prevNeed;
+            const range = next.need - prevNeed;
+            const pct = Math.max(0, Math.min(100, (cur / range) * 100));
+            fill.style.width = pct + '%';
+            text.textContent = `${save.points} / ${next.need} до «${next.name}»`;
+        } else {
+            fill.style.width = '100%';
+            text.textContent = 'Максимальное звание достигнуто!';
+        }
+    }
+
+    // ============================================================
+    //  СОСТОЯНИЕ ИГРЫ
+    // ============================================================
+    let scene, camera, renderer;
+    let playerTank = null;
+    let playerBody = null, playerTurret = null;
+    const enemies = [];
+    const bullets = [];
+    const walls = [];
+    let mazeGrid = null;
+    let exitPos = { x: 0, z: 0 };
+    let exitMesh = null;
+    let exitGrid = { gx: 1, gy: 1 };
+
+    let gameActive = false;
+    let gameTime = 300;
+    let enemiesLeft = 15;
+    let playerHP = 100;
+    let maxPlayerHP = 100;
+
+    const tankStats = { speed: 12, damage: 25, armor: 0, fireRate: 0.8, bulletSpeed: 60 };
+    let lastShootTime = 0;
+
+    const joystick = { active: false, id: null, cx: 0, cy: 0, vx: 0, vy: 0, maxR: 50 };
+    let shootPressed = false;
+    const keys = {};
+    let controlMode = 'tank';
+
+    let selectedType = 'light';
+    let selectedColor = 0x00ff00;
+    let selectedUpgrade = 'damage';
+
+    const camSettings = { height: 20, distance: 24, lookHeight: 2, lerpSpeed: 6, angleSmoothing: 12 };
+    let camYaw = 0;
+
+    // ============================================================
+    //  ИНИЦИАЛИЗАЦИЯ
+    // ============================================================
+    function initThree() {
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a0a14);
+        scene.fog = new THREE.Fog(0x0a0a14, 90, 200);
+
+        camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 800);
+        camera.position.set(0, 25, 30);
+
+        renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        document.body.appendChild(renderer.domElement);
+
+        scene.add(new THREE.AmbientLight(0x777799));
+        const dl = new THREE.DirectionalLight(0xfff0dd, 0.9);
+        dl.position.set(30, 60, 20);
+        scene.add(dl);
+
+        const floorGeo = new THREE.PlaneGeometry(HALF * 2 + 300, HALF * 2 + 300);
+        const floorMat = new THREE.MeshLambertMaterial({ color: 0xccaa00 });
+        const floor = new THREE.Mesh(floorGeo, floorMat);
+        floor.rotation.x = -Math.PI / 2;
+        scene.add(floor);
+
+        window.addEventListener('resize', onResize);
+    }
+
+    function onResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    // ============================================================
+    //  ГЕНЕРАЦИЯ ЛАБИРИНТА (DFS)
+    // ============================================================
+    function generateMazeGrid() {
+        const g = [];
+        for (let y = 0; y < GRID; y++) g.push(new Array(GRID).fill(0));
+        const visited = [];
+        for (let y = 0; y < GRID; y++) visited.push(new Array(GRID).fill(false));
+
+        const startX = 1, startY = 1;
+        g[startY][startX] = 1;
+        visited[startY][startX] = true;
+
+        const stack = [[startX, startY]];
+        const dirs = [[0, -2], [0, 2], [-2, 0], [2, 0]];
+
+        while (stack.length > 0) {
+            const [cx, cy] = stack[stack.length - 1];
+            const neighbors = [];
+            for (const [dx, dy] of dirs) {
+                const nx = cx + dx, ny = cy + dy;
+                if (nx > 0 && nx < GRID - 1 && ny > 0 && ny < GRID - 1 && !visited[ny][nx]) {
+                    neighbors.push([nx, ny, dx, dy]);
+                }
+            }
+            if (neighbors.length === 0) { stack.pop(); continue; }
+            const [nx, ny, dx, dy] = neighbors[Math.floor(Math.random() * neighbors.length)];
+            g[cy + dy / 2][cx + dx / 2] = 1;
+            g[ny][nx] = 1;
+            visited[ny][nx] = true;
+            stack.push([nx, ny]);
+        }
+        return g;
+    }
+
+    function gridToWorld(gx, gy) {
+        return {
+            x: (gx - (GRID - 1) / 2) * CELL,
+            z: (gy - (GRID - 1) / 2) * CELL
+        };
+    }
+
+    function worldToGrid(x, z) {
+        return {
+            gx: Math.round(x / CELL + (GRID - 1) / 2),
+            gy: Math.round(z / CELL + (GRID - 1) / 2)
+        };
+    }
+
+    function isCorridor(gx, gy) {
+        if (gx < 0 || gy < 0 || gx >= GRID || gy >= GRID) return false;
+        return mazeGrid[gy][gx] === 1;
+    }
+
+    function buildMazeMeshes() {
+        walls.forEach(w => scene.remove(w.mesh));
+        walls.length = 0;
+        const wallMat = new THREE.MeshLambertMaterial({ color: 0xaa8800 });
+
+        for (let gy = 0; gy < GRID; gy++) {
+            for (let gx = 0; gx < GRID; gx++) {
+                if (mazeGrid[gy][gx] === 0) {
+                    const p = gridToWorld(gx, gy);
+                    const geo = new THREE.BoxGeometry(CELL, WALL_H, CELL);
+                    const mesh = new THREE.Mesh(geo, wallMat);
+                    mesh.position.set(p.x, WALL_H / 2, p.z);
+                    scene.add(mesh);
+                    walls.push({ mesh, box: new THREE.Box3().setFromObject(mesh) });
+                }
+            }
+        }
+    }
+
+    // ============================================================
+    //  ВЫХОД
+    // ============================================================
+    function placeExit() {
+        let best = null, bestD = -1;
+        for (let gy = 1; gy < GRID - 1; gy += 2) {
+            for (let gx = 1; gx < GRID - 1; gx += 2) {
+                if (mazeGrid[gy][gx] !== 1) continue;
+                const p = gridToWorld(gx, gy);
+                const d = Math.abs(p.x) + Math.abs(p.z);
+                if (d > bestD) { bestD = d; best = { gx, gy, x: p.x, z: p.z }; }
+            }
+        }
+        if (!best) best = { gx: GRID - 2, gy: GRID - 2, x: 0, z: 0 };
+        exitGrid = { gx: best.gx, gy: best.gy };
+        exitPos = { x: best.x, z: best.z };
+
+        if (exitMesh) scene.remove(exitMesh);
+        const group = new THREE.Group();
+        const ringGeo = new THREE.TorusGeometry(2.5, 0.4, 8, 24);
+        const ringMat = new THREE.MeshBasicMaterial({ color: 0x00ff88 });
+        const ring = new THREE.Mesh(ringGeo, ringMat);
+        ring.rotation.x = Math.PI / 2;
+        ring.position.y = 0.2;
+        group.add(ring);
+
+        const beamGeo = new THREE.CylinderGeometry(2.2, 2.2, 12, 16, 1, true);
+        const beamMat = new THREE.MeshBasicMaterial({ color: 0x00ff88, transparent: true, opacity: 0.25, side: THREE.DoubleSide });
+        const beam = new THREE.Mesh(beamGeo, beamMat);
+        beam.position.y = 6;
+        group.add(beam);
+
+        const light = new THREE.PointLight(0x00ff88, 2, 25);
+        light.position.y = 3;
+        group.add(light);
+
+        group.position.set(exitPos.x, 0, exitPos.z);
+        scene.add(group);
+        exitMesh = group;
+    }
+
+    // ============================================================
+    //  КОЛЛИЗИИ
+    // ============================================================
+    function boxCollidesWorld(box) {
+        for (let i = 0; i < walls.length; i++) {
+            if (walls[i].box.intersectsBox(box)) return true;
+        }
+        return false;
+    }
+
+    function positionFree(x, z, radius) {
+        const box = new THREE.Box3(
+            new THREE.Vector3(x - radius, 0.1, z - radius),
+            new THREE.Vector3(x + radius, 2, z + radius)
+        );
+        return !boxCollidesWorld(box);
+    }
+
+    // ============================================================
+    //  ТАНК
+    // ============================================================
+    function makeTank(color, isPlayer) {
+        const group = new THREE.Group();
+        const bodyColor = new THREE.Color(color);
+        const dark = bodyColor.clone().multiplyScalar(0.55);
+
+        const bodyMat = new THREE.MeshLambertMaterial({ color: bodyColor });
+        const turretMat = new THREE.MeshLambertMaterial({ color: bodyColor });
+        const trackMat = new THREE.MeshLambertMaterial({ color: dark });
+        const barrelMat = new THREE.MeshLambertMaterial({ color: 0x222222 });
+
+        const body = new THREE.Mesh(new THREE.BoxGeometry(2.5, 1, 3.5), bodyMat);
+        body.position.y = 0.6;
+        group.add(body);
+
+        const turret = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.9, 2), turretMat);
+        turret.position.set(0, 1.35, 0.1);
+        group.add(turret);
+
+        const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 2.6, 6), barrelMat);
+        barrel.rotation.x = Math.PI / 2;
+        barrel.position.set(0, 1.35, 1.9);
+        group.add(barrel);
+
+        const trackGeo = new THREE.BoxGeometry(0.6, 0.5, 3.9);
+        const tl = new THREE.Mesh(trackGeo, trackMat);
+        tl.position.set(-1.4, 0.25, 0);
+        group.add(tl);
+        const tr = new THREE.Mesh(trackGeo, trackMat);
+        tr.position.set(1.4, 0.25, 0);
+        group.add(tr);
+
+        const markerColor = isPlayer ? 0x00ffff : 0xff3300;
+        const marker = new THREE.Mesh(
+            new THREE.ConeGeometry(0.45, 0.9, 4),
+            new THREE.MeshBasicMaterial({ color: markerColor })
+        );
+        marker.position.y = 2.6;
+        marker.rotation.x = Math.PI;
+        group.add(marker);
+
+        return { group, body, turret, barrel };
+    }
+
+    // ============================================================
+    //  СПАВН
+    // ============================================================
+    function findRandomCorridorCell(minDistFromCenter = 0) {
+        const candidates = [];
+        for (let gy = 1; gy < GRID - 1; gy += 2) {
+            for (let gx = 1; gx < GRID - 1; gx += 2) {
+                if (mazeGrid[gy][gx] !== 1) continue;
+                if (gx === exitGrid.gx && gy === exitGrid.gy) continue;
+                const p = gridToWorld(gx, gy);
+                if (minDistFromCenter > 0 && Math.hypot(p.x, p.z) < minDistFromCenter) continue;
+                candidates.push(p);
+            }
+        }
+        if (candidates.length === 0) return { x: 0, z: 0 };
+        return candidates[Math.floor(Math.random() * candidates.length)];
+    }
+
+    function spawnPlayer() {
+        if (playerTank) { scene.remove(playerTank); playerTank = null; }
+        let p = { x: 0, z: 0 };
+        const c = worldToGrid(0, 0);
+        if (!isCorridor(c.gx, c.gy)) {
+            let best = null, bestD = Infinity;
+            for (let gy = 1; gy < GRID - 1; gy += 2) {
+                for (let gx = 1; gx < GRID - 1; gx += 2) {
+                    if (mazeGrid[gy][gx] !== 1) continue;
+                    const wp = gridToWorld(gx, gy);
+                    const d = Math.hypot(wp.x, wp.z);
+                    if (d < bestD) { bestD = d; best = wp; }
+                }
+            }
+            if (best) p = best;
+        }
+        const t = makeTank(selectedColor, true);
+        playerTank = t.group;
+        playerBody = t.body;
+        playerTurret = t.turret;
+        playerTank.position.set(p.x, 0, p.z);
+        playerTank.rotation.y = 0;
+        scene.add(playerTank);
+    }
+
+    function spawnEnemies() {
+        enemies.forEach(e => scene.remove(e.mesh));
+        enemies.length = 0;
+        const colors = [0xff4422, 0xff2266, 0xdd1111, 0xff7700, 0xcc0033];
+        const used = new Set();
+        let tries = 0;
+        while (enemies.length < 15 && tries < 800) {
+            tries++;
+            const p = findRandomCorridorCell(15);
+            const key = `${Math.round(p.x)},${Math.round(p.z)}`;
+            if (used.has(key)) continue;
+            used.add(key);
+
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            const t = makeTank(color, false);
+            t.group.position.set(p.x, 0, p.z);
+            scene.add(t.group);
+
+            const angle = Math.random() * Math.PI * 2;
+            enemies.push({
+                mesh: t.group,
+                hp: 55 + Math.floor(Math.random() * 25),
+                alive: true,
+                dir: new THREE.Vector2(Math.sin(angle), Math.cos(angle)),
+                changeDirTimer: 1 + Math.random() * 2,
+                speed: 4 + Math.random() * 2,
+                fireCooldown: Math.random() * 2
+            });
+        }
+        enemiesLeft = enemies.length;
+        updateHUD();
+    }
+
+    // ============================================================
+    //  СТАРТ
+    // ============================================================
+    function startGame() {
+        if (playerTank) { scene.remove(playerTank); playerTank = null; }
+        bullets.forEach(b => scene.remove(b.mesh)); bullets.length = 0;
+        enemies.forEach(e => scene.remove(e.mesh)); enemies.length = 0;
+        if (exitMesh) { scene.remove(exitMesh); exitMesh = null; }
+
+        gameTime = 300;
+        gameActive = true;
+        lastShootTime = 0;
+        shootPressed = false;
+        camYaw = 0;
+        sessionKills = 0;
+
+        let baseHP = 100;
+        if (selectedType === 'sniper') {
+            tankStats.speed = 9;  tankStats.damage = 55;  tankStats.armor = 0;
+            tankStats.fireRate = 1.1; tankStats.bulletSpeed = 110; baseHP = 85;
+        } else if (selectedType === 'light') {
+            tankStats.speed = 16; tankStats.damage = 22;  tankStats.armor = 0;
+            tankStats.fireRate = 0.45; tankStats.bulletSpeed = 75; baseHP = 100;
+        } else {
+            tankStats.speed = 7;  tankStats.damage = 38;  tankStats.armor = 0.4;
+            tankStats.fireRate = 0.95; tankStats.bulletSpeed = 55; baseHP = 150;
+        }
+        if (selectedUpgrade === 'speed') tankStats.speed *= 1.35;
+        else if (selectedUpgrade === 'damage') tankStats.damage *= 1.45;
+        else if (selectedUpgrade === 'armor') tankStats.armor = Math.min(0.75, tankStats.armor + 0.25);
+
+        maxPlayerHP = baseHP;
+        playerHP = maxPlayerHP;
+
+        mazeGrid = generateMazeGrid();
+        buildMazeMeshes();
+        placeExit();
+        spawnPlayer();
+        spawnEnemies();
+        updateCameraImmediate();
+
+        document.getElementById('menu').classList.add('hidden');
+        document.getElementById('hud').classList.remove('hidden');
+        document.getElementById('minimap').classList.remove('hidden');
+        document.getElementById('joystick-area').classList.remove('hidden');
+        document.getElementById('shoot-btn').classList.remove('hidden');
+        document.getElementById('game-over').style.display = 'none';
+
+        updateHUD();
+    }
+
+    // ============================================================
+    //  HUD
+    // ============================================================
+    function updateHUD() {
+        const m = Math.floor(gameTime / 60);
+        const s = Math.floor(gameTime % 60);
+        document.getElementById('timer').textContent =
+            String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+        document.getElementById('enemies').textContent = enemiesLeft;
+        document.getElementById('hp').textContent = Math.max(0, Math.floor(playerHP));
+
+        if (playerTank) {
+            const dx = exitPos.x - playerTank.position.x;
+            const dz = exitPos.z - playerTank.position.z;
+            const d = Math.hypot(dx, dz);
+            document.getElementById('exit-dist').textContent = Math.floor(d) + 'м';
+        }
+    }
+
+    // ============================================================
+    //  СТРЕЛЬБА
+    // ============================================================
+    function spawnBullet(pos, dir, isPlayer, damage, speed) {
+        const geo = new THREE.SphereGeometry(isPlayer ? 0.4 : 0.35, 6, 6);
+        const mat = new THREE.MeshBasicMaterial({ color: isPlayer ? 0x66ffff : 0xffaa33 });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.copy(pos);
+        mesh.position.y = 1.35;
+        scene.add(mesh);
+        bullets.push({
+            mesh,
+            vel: dir.clone().multiplyScalar(speed),
+            life: 2.5,
+            damage,
+            owner: isPlayer ? 'player' : 'enemy'
+        });
+    }
+
+    // ============================================================
+    //  КАМЕРА
+    // ============================================================
+    function computeCameraTarget() {
+        if (!playerTank) return null;
+        const targetYaw = playerTank.rotation.y;
+        camYaw = lerpAngle(camYaw, targetYaw, 1 - Math.pow(0.001, camSettings.angleSmoothing));
+        const behind = new THREE.Vector3(
+            -Math.sin(camYaw) * camSettings.distance,
+            camSettings.height,
+            -Math.cos(camYaw) * camSettings.distance
+        );
+        const targetPos = playerTank.position.clone().add(behind);
+        const lookAt = playerTank.position.clone();
+        lookAt.y += camSettings.lookHeight;
+        return { targetPos, lookAt };
+    }
+
+    function updateCameraImmediate() {
+        const t = computeCameraTarget();
+        if (!t) return;
+        camera.position.copy(t.targetPos);
+        camera.lookAt(t.lookAt);
+    }
+
+    function updateCamera(dt) {
+        const t = computeCameraTarget();
+        if (!t) return;
+        const k = 1 - Math.pow(0.0001, camSettings.lerpSpeed * dt);
+        camera.position.lerp(t.targetPos, k);
+        const camBox = new THREE.Box3(
+            new THREE.Vector3(camera.position.x - 0.5, camera.position.y - 0.5, camera.position.z - 0.5),
+            new THREE.Vector3(camera.position.x + 0.5, camera.position.y + 0.5, camera.position.z + 0.5)
+        );
+        if (boxCollidesWorld(camBox)) camera.position.y += 2;
+        camera.lookAt(t.lookAt);
+    }
+
+    // ============================================================
+    //  ОБНОВЛЕНИЕ
+    // ============================================================
+    function updateGame(dt) {
+        if (!gameActive) return;
+
+        gameTime -= dt;
+        if (gameTime <= 0) { endGame(false, 'Время вышло! Закулисье поглотило вас.'); return; }
+
+        if (playerTank) {
+            const dx = playerTank.position.x - exitPos.x;
+            const dz = playerTank.position.z - exitPos.z;
+            if (Math.hypot(dx, dz) < 3.0) {
+                endGame(true, 'Вы нашли выход из Закулисья!', 'escape');
+                return;
+            }
+        }
+
+        if (enemiesLeft <= 0) { endGame(true, 'Все враги уничтожены! Зачистка завершена.', 'clear'); return; }
+        if (playerHP <= 0) { endGame(false, 'Ваш танк уничтожен.'); return; }
+
+        // ---- Игрок ----
+        if (playerTank) {
+            let mx = 0, mz = 0;
+            if (joystick.active) { mx = joystick.vx; mz = joystick.vy; }
+            else {
+                if (keys['w'] || keys['arrowup'])    mz -= 1;
+                if (keys['s'] || keys['arrowdown'])  mz += 1;
+                if (keys['a'] || keys['arrowleft'])  mx -= 1;
+                if (keys['d'] || keys['arrowright']) mx += 1;
+            }
+
+            if (controlMode === 'tank') {
+                const forward = -mz;
+                const turn = mx;
+                if (Math.abs(turn) > 0.05) {
+                    playerTank.rotation.y -= turn * 2.5 * dt;
+                }
+                if (Math.abs(forward) > 0.05) {
+                    const dir = new THREE.Vector3(0, 0, 1).applyQuaternion(playerTank.quaternion);
+                    const step = forward * tankStats.speed * dt;
+                    const nx = playerTank.position.x + dir.x * step;
+                    const nz = playerTank.position.z + dir.z * step;
+                    if (positionFree(nx, playerTank.position.z, 1.7)) playerTank.position.x = nx;
+                    if (positionFree(playerTank.position.x, nz, 1.7)) playerTank.position.z = nz;
+                }
+            } else {
+                const len = Math.hypot(mx, mz);
+                if (len > 0.08) {
+                    const nmx = mx / len, nmz = mz / len;
+                    const step = tankStats.speed * dt;
+                    const nx = playerTank.position.x + nmx * step;
+                    const nz = playerTank.position.z + nmz * step;
+                    if (positionFree(nx, playerTank.position.z, 1.7)) playerTank.position.x = nx;
+                    if (positionFree(playerTank.position.x, nz, 1.7)) playerTank.position.z = nz;
+                    const targetAngle = Math.atan2(nmx, nmz);
+                    playerTank.rotation.y = lerpAngle(playerTank.rotation.y, targetAngle, Math.min(1, dt * 10));
+                }
+            }
+
+            const now = performance.now() / 1000;
+            if (shootPressed && now - lastShootTime >= tankStats.fireRate) {
+                lastShootTime = now;
+                const dir = new THREE.Vector3(0, 0, 1).applyQuaternion(playerTank.quaternion);
+                spawnBullet(playerTank.position.clone(), dir, true, tankStats.damage, tankStats.bulletSpeed);
+            }
+        }
+
+        // ---- Враги ----
+        for (let i = 0; i < enemies.length; i++) {
+            const e = enemies[i];
+            if (!e.alive) continue;
+            if (playerTank) {
+                const dx = playerTank.position.x - e.mesh.position.x;
+                const dz = playerTank.position.z - e.mesh.position.z;
+                const dist = Math.hypot(dx, dz);
+                if (dist > 0.1) e.dir.set(dx / dist, dz / dist);
+
+                e.changeDirTimer -= dt;
+                if (e.changeDirTimer <= 0) {
+                    e.changeDirTimer = 1.5 + Math.random() * 2;
+                    const a = Math.atan2(e.dir.x, e.dir.y) + (Math.random() - 0.5) * 1.2;
+                    e.dir.set(Math.sin(a), Math.cos(a));
+                }
+                const step = e.speed * dt;
+                const nx = e.mesh.position.x + e.dir.x * step;
+                const nz = e.mesh.position.z + e.dir.y * step;
+                if (positionFree(nx, e.mesh.position.z, 1.7)) e.mesh.position.x = nx;
+                else e.dir.x *= -1;
+                if (positionFree(e.mesh.position.x, nz, 1.7)) e.mesh.position.z = nz;
+                else e.dir.y *= -1;
+
+                const targetAngle = Math.atan2(e.dir.x, e.dir.y);
+                e.mesh.rotation.y = lerpAngle(e.mesh.rotation.y, targetAngle, Math.min(1, dt * 8));
+
+                e.fireCooldown -= dt;
+                if (dist < 35 && e.fireCooldown <= 0) {
+                    e.fireCooldown = 1.5 + Math.random() * 1.5;
+                    const dir = new THREE.Vector3(dx, 0, dz).normalize();
+                    spawnBullet(e.mesh.position.clone(), dir, false, 12, 45);
+                }
+            }
+        }
+
+        // ---- Пули ----
+        for (let i = bullets.length - 1; i >= 0; i--) {
+            const b = bullets[i];
+            b.mesh.position.addScaledVector(b.vel, dt);
+            b.life -= dt;
+            let remove = false;
+            const bBox = new THREE.Box3().setFromObject(b.mesh);
+            for (let w of walls) {
+                if (w.box.intersectsBox(bBox)) { remove = true; break; }
+            }
+            if (!remove) {
+                if (b.owner === 'player') {
+                    for (let j = 0; j < enemies.length; j++) {
+                        const e = enemies[j];
+                        if (!e.alive) continue;
+                        if (b.mesh.position.distanceTo(e.mesh.position) < 2.4) {
+                            e.hp -= b.damage;
+                            if (e.hp <= 0) {
+                                e.alive = false;
+                                scene.remove(e.mesh);
+                                enemiesLeft--;
+                                sessionKills++;
+                                updateHUD();
+                            }
+                            remove = true;
+                            break;
+                        }
+                    }
+                } else if (playerTank) {
+                    if (b.mesh.position.distanceTo(playerTank.position) < 2.4) {
+                        const dmg = b.damage * (1 - tankStats.armor);
+                        playerHP -= dmg;
+                        updateHUD();
+                        remove = true;
+                    }
+                }
+            }
+            if (remove || b.life <= 0) {
+                scene.remove(b.mesh);
+                bullets.splice(i, 1);
+            }
+        }
+
+        if (exitMesh) exitMesh.rotation.y += dt * 1.5;
+
+        updateCamera(dt);
+        updateMinimap();
+        updateHUD();
+    }
+
+    function lerpAngle(a, b, t) {
+        let d = b - a;
+        while (d > Math.PI) d -= Math.PI * 2;
+        while (d < -Math.PI) d += Math.PI * 2;
+        return a + d * t;
+    }
+
+    // ============================================================
+    //  МИНИ-КАРТА
+    // ============================================================
+    const minimapCanvas = document.getElementById('minimap');
+    const mmCtx = minimapCanvas.getContext('2d');
+
+    function updateMinimap() {
+        if (!mazeGrid) return;
+        const W = minimapCanvas.width, H = minimapCanvas.height;
+        const stepX = W / GRID, stepY = H / GRID;
+
+        mmCtx.fillStyle = 'rgba(0,0,0,0.85)';
+        mmCtx.fillRect(0, 0, W, H);
+
+        mmCtx.fillStyle = '#aa8800';
+        for (let gy = 0; gy < GRID; gy++) {
+            for (let gx = 0; gx < GRID; gx++) {
+                if (mazeGrid[gy][gx] === 0) {
+                    mmCtx.fillRect(gx * stepX, gy * stepY, Math.ceil(stepX), Math.ceil(stepY));
+                }
+            }
+        }
+
+        mmCtx.fillStyle = '#00ff88';
+        mmCtx.beginPath();
+        mmCtx.arc(exitGrid.gx * stepX + stepX / 2, exitGrid.gy * stepY + stepY / 2, Math.max(2, stepX * 1.5), 0, Math.PI * 2);
+        mmCtx.fill();
+
+        mmCtx.fillStyle = '#ff4444';
+        for (const e of enemies) {
+            if (!e.alive) continue;
+            const g = worldToGrid(e.mesh.position.x, e.mesh.position.z);
+            mmCtx.beginPath();
+            mmCtx.arc(g.gx * stepX + stepX / 2, g.gy * stepY + stepY / 2, Math.max(1.2, stepX * 0.8), 0, Math.PI * 2);
+            mmCtx.fill();
+        }
+
+        if (playerTank) {
+            const g = worldToGrid(playerTank.position.x, playerTank.position.z);
+            mmCtx.fillStyle = '#00ffff';
+            mmCtx.beginPath();
+            mmCtx.arc(g.gx * stepX + stepX / 2, g.gy * stepY + stepY / 2, Math.max(2, stepX * 1.2), 0, Math.PI * 2);
+            mmCtx.fill();
+            const dir = new THREE.Vector3(0, 0, 1).applyQuaternion(playerTank.quaternion);
+            mmCtx.strokeStyle = '#00ffff';
+            mmCtx.lineWidth = 1.5;
+            mmCtx.beginPath();
+            mmCtx.moveTo(g.gx * stepX + stepX / 2, g.gy * stepY + stepY / 2);
+            mmCtx.lineTo(g.gx * stepX + stepX / 2 + dir.x * stepX * 2.5, g.gy * stepY + stepY / 2 + dir.z * stepY * 2.5);
+            mmCtx.stroke();
+        }
+    }
+
+    // ============================================================
+    //  КОНЕЦ ИГРЫ + ОЧКИ
+    // ============================================================
+    function endGame(win, msg, reason) {
+        gameActive = false;
+        shootPressed = false;
+        joystick.active = false;
+        joystick.vx = joystick.vy = 0;
+        resetJoystickKnob();
+
+        let reward = sessionKills * 100;
+        if (win && reason === 'clear') {
+            reward += 500;
+        } else if (win && reason === 'escape') {
+            const elapsed = 300 - gameTime;
+            const timeBonus = Math.max(0, Math.floor((300 - elapsed) * 3));
+            reward += 800 + timeBonus;
+            if (save.bestTime == null || elapsed < save.bestTime) save.bestTime = elapsed;
+        } else {
+            reward -= 50;
+        }
+        if (reward < 0) reward = 0;
+
+        const oldRankIdx = getRankIndex(save.points);
+        save.points = Math.max(0, save.points + reward);
+        save.totalKills += sessionKills;
+        if (win) save.wins++;
+        writeSave(save);
+
+        const newRankIdx = getRankIndex(save.points);
+
+        const title = document.getElementById('result-title');
+        title.textContent = win ? 'ПОБЕДА!' : 'ПОРАЖЕНИЕ';
+        title.style.color = win ? '#00ff66' : '#ff3344';
+        document.getElementById('result-text').textContent = msg;
+        document.getElementById('reward-line').textContent =
+            (reward >= 0 ? '+' : '') + reward + ' очков';
+        const nr = document.getElementById('new-rank');
+        if (newRankIdx > oldRankIdx) {
+            nr.textContent = '⬆ Новое звание: ' + RANKS[newRankIdx].name + '!';
+        } else {
+            nr.textContent = '';
+        }
+        document.getElementById('game-over').style.display = 'flex';
+
+        refreshProfileUI();
+    }
+
+    // ============================================================
+    //  АНИМАЦИЯ
+    // ============================================================
+    let lastTime = performance.now();
+    function animate() {
+        requestAnimationFrame(animate);
+        const now = performance.now();
+        const dt = Math.min((now - lastTime) / 1000, 0.05);
+        lastTime = now;
+        updateGame(dt);
+        renderer.render(scene, camera);
+    }
+
+    // ============================================================
+    //  МЕНЮ
+    // ============================================================
+    function bindMenu() {
+        document.querySelectorAll('#tank-type button').forEach(btn => {
+            btn.onclick = () => {
+                document.querySelectorAll('#tank-type button').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                selectedType = btn.dataset.type;
+            };
+        });
+        document.querySelectorAll('#tank-color button').forEach(btn => {
+            btn.onclick = () => {
+                document.querySelectorAll('#tank-color button').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                selectedColor = parseInt(btn.dataset.color);
+            };
+        });
+        document.querySelectorAll('#tank-upgrade button').forEach(btn => {
+            btn.onclick = () => {
+                document.querySelectorAll('#tank-upgrade button').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                selectedUpgrade = btn.dataset.upgrade;
+            };
+        });
+        document.querySelectorAll('#control-mode button').forEach(btn => {
+            btn.onclick = () => {
+                document.querySelectorAll('#control-mode button').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                controlMode = btn.dataset.mode;
+            };
+        });
+        document.getElementById('start-btn').onclick = startGame;
+        document.getElementById('restart-btn').onclick = () => {
+            document.getElementById('game-over').style.display = 'none';
+            document.getElementById('menu').classList.remove('hidden');
+            document.getElementById('hud').classList.add('hidden');
+            document.getElementById('minimap').classList.add('hidden');
+            document.getElementById('joystick-area').classList.add('hidden');
+            document.getElementById('shoot-btn').classList.add('hidden');
+            if (playerTank) { scene.remove(playerTank); playerTank = null; }
+            bullets.forEach(b => scene.remove(b.mesh)); bullets.length = 0;
+            enemies.forEach(e => scene.remove(e.mesh)); enemies.length = 0;
+            walls.forEach(w => scene.remove(w.mesh)); walls.length = 0;
+            if (exitMesh) { scene.remove(exitMesh); exitMesh = null; }
+            mazeGrid = null;
+            gameActive = false;
+            refreshProfileUI();
+        };
+    }
+
+    // ============================================================
+    //  ДЖОЙСТИК
+    // ============================================================
+    const joyArea = document.getElementById('joystick-area');
+    const joyKnob = document.getElementById('joystick-knob');
+
+    function resetJoystickKnob() { joyKnob.style.transform = 'translate(0px, 0px)'; }
+
+    function joyStart(touch) {
+        joystick.active = true;
+        joystick.id = touch.identifier;
+        const rect = joyArea.getBoundingClientRect();
+        joystick.cx = rect.left + rect.width / 2;
+        joystick.cy = rect.top + rect.height / 2;
+        joystick.maxR = Math.min(rect.width, rect.height) * 0.42;
+        joyMove(touch);
+    }
+    function joyMove(touch) {
+        if (!joystick.active || touch.identifier !== joystick.id) return;
+        let dx = touch.clientX - joystick.cx;
+        let dy = touch.clientY - joystick.cy;
+        const dist = Math.hypot(dx, dy);
+        if (dist > joystick.maxR) { dx = dx / dist * joystick.maxR; dy = dy / dist * joystick.maxR; }
+        joystick.vx = dx / joystick.maxR;
+        joystick.vy = dy / joystick.maxR;
+        joyKnob.style.transform = `translate(${dx}px, ${dy}px)`;
+    }
+    function joyEnd() {
+        joystick.active = false; joystick.id = null;
+        joystick.vx = joystick.vy = 0;
+        resetJoystickKnob();
+    }
+    joyArea.addEventListener('touchstart', e => { e.preventDefault(); if (e.changedTouches.length) joyStart(e.changedTouches[0]); }, { passive: false });
+    joyArea.addEventListener('touchmove', e => { e.preventDefault(); for (let t of e.changedTouches) joyMove(t); }, { passive: false });
+    joyArea.addEventListener('touchend', e => { e.preventDefault(); for (let t of e.changedTouches) if (t.identifier === joystick.id) joyEnd(); }, { passive: false });
+    joyArea.addEventListener('touchcancel', e => { e.preventDefault(); joyEnd(); }, { passive: false });
+
+    let mouseDown = false;
+    joyArea.addEventListener('mousedown', e => {
+        mouseDown = true; joystick.active = true; joystick.id = 'mouse';
+        const rect = joyArea.getBoundingClientRect();
+        joystick.cx = rect.left + rect.width / 2;
+        joystick.cy = rect.top + rect.height / 2;
+        joystick.maxR = Math.min(rect.width, rect.height) * 0.42;
+        joyMoveMouse(e);
+    });
+    window.addEventListener('mousemove', e => { if (mouseDown) joyMoveMouse(e); });
+    window.addEventListener('mouseup', () => { if (mouseDown) { mouseDown = false; joyEnd(); } });
+    function joyMoveMouse(e) {
+        let dx = e.clientX - joystick.cx, dy = e.clientY - joystick.cy;
+        const dist = Math.hypot(dx, dy);
+        if (dist > joystick.maxR) { dx = dx / dist * joystick.maxR; dy = dy / dist * joystick.maxR; }
+        joystick.vx = dx / joystick.maxR;
+        joystick.vy = dy / joystick.maxR;
+        joyKnob.style.transform = `translate(${dx}px, ${dy}px)`;
+    }
+
+    // ============================================================
+    //  КНОПКА ОГОНЬ
+    // ============================================================
+    const shootBtn = document.getElementById('shoot-btn');
+    function onShootStart(e) { e.preventDefault(); shootPressed = true; }
+    function onShootEnd(e)   { e.preventDefault(); shootPressed = false; }
+    shootBtn.addEventListener('touchstart', onShootStart, { passive: false });
+    shootBtn.addEventListener('touchend', onShootEnd, { passive: false });
+    shootBtn.addEventListener('touchcancel', onShootEnd, { passive: false });
+    shootBtn.addEventListener('mousedown', onShootStart);
+    shootBtn.addEventListener('mouseup', onShootEnd);
+    shootBtn.addEventListener('mouseleave', onShootEnd);
+
+    // ============================================================
+    //  КЛАВИАТУРА
+    // ============================================================
+    window.addEventListener('keydown', e => {
+        keys[e.key.toLowerCase()] = true;
+        if (e.key === ' ') { shootPressed = true; e.preventDefault(); }
+    });
+    window.addEventListener('keyup', e => {
+        keys[e.key.toLowerCase()] = false;
+        if (e.key === ' ') shootPressed = false;
+    });
+
+    // ============================================================
+    //  СТАРТ
+    // ============================================================
+    initThree();
+    bindMenu();
+    refreshProfileUI();
+    animate();
+})();
+</script>
+</body>
+  </html>
